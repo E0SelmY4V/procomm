@@ -26,6 +26,8 @@ declare class MpathHdl {
     reProce(proce?: Proce): MpathHdl;
     /**@param {string} mpath */
     reMpath(mpath?: string): MpathHdl;
+    set alwaysJS(arg: boolean);
+    get alwaysJS(): boolean;
     procing: {
         [pid: number]: ProceHdl;
     };

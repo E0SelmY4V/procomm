@@ -27,10 +27,11 @@ const DEF = isRev ? {
 	MPATH: '/index',
 	KEY: '/index:/index',
 };
+let alwaysJS = true;
+const addExt = (n = '') => n[n.length - 1].indexOf(path.sep) && !path.extname(n) ? n + '.js' : n;
+const oriStr = (n = '') => n;
+let assocJS = alwaysJS ? addExt : oriStr;
 
-// function addExt(n = '') {
-// 	return n[n.length - 1].indexOf(path.sep) && !path.extname(n) ? n + '.js' : n;
-// }
 /**@param {[string,string]} keyArr */
 function toKey(keyArr = []) {
 	return keyArr.map(e => path.normalize(e).split('|').join('||').split(':').join('|:')).join(':');
@@ -95,12 +96,12 @@ MpathHdl.prototype = {
 	liser: null,
 	/**@type {(target?:string,message?:any,subProce?:Proce,handle?:unknown)=>MpathHdl} */
 	tell(target = this.mpath, message = null, proce = this.proce, handle = null) {
-		proce.send(new MsgPack(this.mpath, resMpath(target, this.mdir), message), handle);
+		proce.send(new MsgPack(this.mpath, resMpath(assocJS(target), this.mdir), message), handle);
 		return this;
 	},
 	/**@type {(from?:string,listener?:NodeJS.MessageListener)=>MpathHdl} callback */
 	listen(from = this.mpath, listener = _ => _) {
-		const key = toKey([resMpath(from, this.mdir), this.mpath]);
+		const key = toKey([resMpath(assocJS(from), this.mdir), this.mpath]);
 		(this.liser[key] || (this.liser[key] = [])).push(listener);
 		return this;
 	},
@@ -115,6 +116,12 @@ MpathHdl.prototype = {
 	/**@param {string} mpath */
 	reMpath(mpath = this.mpath) {
 		return getHandle(resMpath(mpath, this.mdir), this.proce);
+	},
+	get alwaysJS() {
+		return alwaysJS;
+	},
+	set alwaysJS(n) {
+		assocJS = (alwaysJS = n) ? addExt : oriStr;
 	},
 	procing,
 	getHandle,
