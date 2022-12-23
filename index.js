@@ -7,118 +7,119 @@
  */
 'use strict';
 
+/**@typedef {NodeJS.Process} NowProce */
+/**@typedef {(typeof import('child_process'))['ChildProcess']} SubProce */
+/**@typedef {NowProce|SubProce} Proce */
+
 const path = require('path');
-const child_process = require('child_process');
-const { ChildProcess } = require('child_process');
-const DEFAULT_MODULE_NAME = 'common';
+const isRev = path.sep === '\\';
+const resMpath = isRev
+	? (mname = '', mdir = '') => mname.length < 3 || mname.slice(1, 3).indexOf(':\\') ? mdir + mname : mname
+	: (mname = '', mdir = '') => mname[0].indexOf('/') ? mdir + mname : mname;
+const DEF = isRev ? {
+	MNAME: 'index',
+	MDIR: 'C:\\',
+	MPATH: 'C:\\index',
+	KEY: 'C|:\\index:C|:\\index',
+} : {
+	MNAME: 'index',
+	MDIR: '/',
+	MPATH: '/index',
+	KEY: '/index:/index',
+};
 
-/**@typedef {NodeJS.Process|ChildProcess} Process */
-
-/**@param {string[]|string} keyArr */
-function toKey(keyArr) {
-	return typeof keyArr === 'string'
-		? keyArr
-		: keyArr.map(e => e.split(':').join('::').split('|').join(':|')).join('|');
+// function addExt(n = '') {
+// 	return n[n.length - 1].indexOf(path.sep) && !path.extname(n) ? n + '.js' : n;
+// }
+/**@param {[string,string]} keyArr */
+function toKey(keyArr = []) {
+	return keyArr.map(e => path.normalize(e).split('|').join('||').split(':').join('|:')).join(':');
 }
-function formatName(name = DEFAULT_MODULE_NAME, dir = '') {
-	return path.resolve(__dirname, dir, name);
+/**@type {(mpfrom:string,mpsend?:string,mdir?:string,msg?:any)=>MsgPack} */
+function MsgPack(mpfrom = DEF.MPATH, mpsend = DEF.MPATH, msg = null) {
+	this.key = toKey([mpfrom, mpsend]);
+	this.msg = msg;
 }
-/**
- * @param {ModuleHandle} moduleHandle
- * @param {any} message
- */
-function MessagePack(moduleHandle, sendModule = DEFAULT_MODULE_NAME, message = null) {
-	this.key = toKey([moduleHandle.address, formatName(sendModule, moduleHandle.dirname)]);
-	this.message = message;
-}
-MessagePack.prototype = {
-	key: toKey([DEFAULT_MODULE_NAME, DEFAULT_MODULE_NAME]),
+MsgPack.prototype = {
+	key: DEF.KEY,
 	/**@type {any} */
-	message: null,
+	msg: null,
 };
-/**@type {{[pid:number]:ProcessHandle}} */
-const usingProce = {};
-/**@param {Process} childProce */
-function getHandle(moduleName = DEFAULT_MODULE_NAME, dirname = '', childProce = null) {
-	return (
-		usingProce[(childProce || process).pid] ||
-		new ProcessHandle(childProce)
-	).createModule(moduleName, dirname);
+/**@type {{[pid:number]:ProceHdl}} */
+const procing = {};
+/**@type {(mpath?:string,subProce?:SubProce|null,mdir?:string)=>MpathHdl} */
+function getHandle(mpath = DEF.MPATH, subProce = null, mdir = '') {
+	return (procing[(subProce || process).pid] || new ProceHdl(subProce)).setMpath(mpath, mdir);
 }
-/**@param {Process} childProce */
-function ProcessHandle(childProce = null) {
-	this.listener = {};
-	this.module = {};
-	if (childProce !== null) this.tpro = childProce;
-	usingProce[this.tpro.on('message', this.processEar.bind(this)).pid] = this;
+getHandle.getHandle = getHandle;
+/**@param {SubProce|null} subProce */
+function ProceHdl(subProce = null) {
+	return procing[(subProce ? this.proce = subProce : process).pid] || (
+		this.mpath = {},
+		procing[this.proce.on('message', ProceHdl.getEar(this.liser = {})).pid] = this
+	);
 }
-ProcessHandle.prototype = {
-	/**@returns {ModuleHandle} */
-	createModule(moduleName = DEFAULT_MODULE_NAME, dirname = '') {
-		moduleName = formatName(moduleName, dirname);
-		const mHdl = this.module[moduleName];
-		return mHdl ? mHdl : new ModuleHandle(moduleName, this);
-	},
-	/**@type {Process} */
-	tpro: process,
-	/**@type {{[key:string]:NodeJS.MessageListener[]}} */
-	listener: null,
-	/**@type {{[name:string]:ModuleHandle}} */
-	module: null,
-	/**@param {MessagePack} pack */
-	processEar(pack, handle) {
-		this.listener[pack.key]
-			&& this.listener[pack.key].forEach(e => e(pack.message, handle));
-	},
+/**@type {(l:ProceHdl['liser'])=>(pack:MsgPack,handle:unknown)=>void} */
+ProceHdl.getEar = function (l) {
+	return (pack, handle) => (l[pack.key] || (l[pack.key] = [])).forEach(e => e(pack.msg, handle));
 };
-/**@param {ProcessHandle} processHandle */
-function ModuleHandle(moduleName = DEFAULT_MODULE_NAME, processHandle) {
-	this.pHandle = processHandle;
-	this.listener = processHandle.listener;
-	this.at(moduleName);
-}
-ModuleHandle.prototype = {
-	/**@type {ProcessHandle} */
-	pHandle: null,
-	address: DEFAULT_MODULE_NAME,
-	dirname: '.',
+ProceHdl.prototype = {
+	/**@param {string} mdir */
+	setMpath(mpath = DEF.MPATH, mdir = '') {
+		return this.mpath[mdir + mpath] || new MpathHdl(this, mpath, mdir);
+	},
+	/**@type {Proce} */
+	proce: process,
 	/**@type {{[key:string]:NodeJS.MessageListener[]}} */
-	listener: null,
-	at(n = this.address) {
-		delete this.pHandle.module[this.address];
-		this.address = formatName(n);
-		this.dirname = path.dirname(this.address);
-		this.pHandle.module[this.address] = this;
+	liser: null,
+	/**@type {{[name:string]:MpathHdl}} */
+	mpath: null,
+};
+/**@type {(proceHdl:ProceHdl,mpath?:string,mdir?:string|null)=>MpathHdl} */
+function MpathHdl(proceHdl, mpath = DEF.MPATH, mdir = null) {
+	this.liser = (this.proceHdl = proceHdl).liser, this.proce = proceHdl.proce;
+	mdir ? [this.mpath, this.mname, this.mdir] = [mdir + mpath, mpath, mdir] : (
+		this.mname = path.basename((this.mpath = mpath) + ' ').slice(0, -1),
+		this.mdir = mpath.slice(0, - this.mname.length)
+	);
+}
+MpathHdl.prototype = {
+	/**@type {Proce} */
+	proce: null,
+	/**@type {ProceHdl} */
+	proceHdl: null,
+	mpath: DEF.MPATH,
+	mdir: DEF.MDIR,
+	mname: DEF.MNAME,
+	/**@type {ProceHdl['liser']} */
+	liser: null,
+	/**@type {(target?:string,message?:any,subProce?:Proce,handle?:unknown)=>MpathHdl} */
+	tell(target = this.mpath, message = null, proce = this.proce, handle = null) {
+		proce.send(new MsgPack(this.mpath, resMpath(target, this.mdir), message), handle);
 		return this;
 	},
-	/**
-	 * @param {any} message
-	 * @param {any} sendHandle
-	 */
-	tell(childProce = this.tpro, sendModule = this.address, message = null, sendHandle = null) {
-		childProce.send(new MessagePack(this, sendModule, message), sendHandle);
+	/**@type {(from?:string,listener?:NodeJS.MessageListener)=>MpathHdl} callback */
+	listen(from = this.mpath, listener = _ => _) {
+		const key = toKey([resMpath(from, this.mdir), this.mpath]);
+		(this.liser[key] || (this.liser[key] = [])).push(listener);
 		return this;
 	},
-	/**@param {NodeJS.MessageListener} callback */
-	listen(from = this.address, callback = () => { }) {
-		const key = toKey([path.resolve(this.dirname, from), this.address]);
-		(this.listener[key] || (this.listener[key] = [])).push(callback);
-		return this;
+	/**@type {(proce:Proce,mpath:string)=>MpathHdl} */
+	reset(proce = this.proce, mpath = this.mpath) {
+		return getHandle(mpath, proce);
 	},
-	reProcess(childProce = this.tpro) {
-		return getHandle(this.address, '', childProce);
+	/**@param {Proce} proce */
+	reProce(proce = this.proce) {
+		return getHandle(this.mname, proce, this.mdir);
 	},
-	reModule(moduleName = this.address) {
-		return getHandle(moduleName, this.dirname, this.pHandle.tpro);
+	/**@param {string} mpath */
+	reMpath(mpath = this.mpath) {
+		return getHandle(resMpath(mpath, this.mdir), this.proce);
 	},
-	varexp: {
-		toKey,
-		formatName,
-		usingProce,
-		getHandle,
-		MessagePack,
-		ProcessHandle,
-		ModuleHandle,
-	},
+	procing,
+	getHandle,
+	MsgPack,
+	ProceHdl,
+	MpathHdl,
 };
 module.exports = getHandle;

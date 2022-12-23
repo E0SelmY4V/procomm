@@ -13,9 +13,16 @@
 		"strictPropertyInitialization": true,
 		"strictBindCallApply": true,
 		"noImplicitThis": true,
+		"allowJs": true,
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"incremental": true,
 	},
 	"exclude": [
 		"node_modules",
 		"**/node_modules/*"
+	],
+	"files": [
+		"index.js",
 	],
 }
