@@ -50,7 +50,7 @@ MsgPack.prototype = {
 const procing = {};
 /**@type {(mpath?:string,subProce?:SubProce|null,mdir?:string)=>MpathHdl} */
 function getHandle(mpath = DEF.MPATH, subProce = null, mdir = '') {
-	return (procing[(subProce || process).pid] || new ProceHdl(subProce)).setMpath(mpath, mdir);
+	return (procing[(subProce || process).pid] || new ProceHdl(subProce)).setMpath(assocJS(mpath), mdir);
 }
 getHandle.getHandle = getHandle;
 /**@param {SubProce|null} subProce */
@@ -96,6 +96,7 @@ MpathHdl.prototype = {
 	liser: null,
 	/**@type {(target?:string,message?:any,subProce?:Proce,handle?:unknown)=>MpathHdl} */
 	tell(target = this.mpath, message = null, proce = this.proce, handle = null) {
+		if (!proce.send) throw Error('This process cannot be told');
 		proce.send(new MsgPack(this.mpath, resMpath(assocJS(target), this.mdir), message), handle);
 		return this;
 	},
@@ -107,7 +108,7 @@ MpathHdl.prototype = {
 	},
 	/**@type {(proce:Proce,mpath:string)=>MpathHdl} */
 	reset(proce = this.proce, mpath = this.mpath) {
-		return getHandle(mpath, proce);
+		return getHandle(resMpath(mpath, this.mdir), proce);
 	},
 	/**@param {Proce} proce */
 	reProce(proce = this.proce) {
