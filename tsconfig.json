@@ -17,6 +17,7 @@
 		"declaration": true,
 		"emitDeclarationOnly": true,
 		"incremental": true,
+		"removeComments": true,
 	},
 	"exclude": [
 		"node_modules",
