@@ -11,7 +11,7 @@
 /**@typedef {NowProce|SubProce} Proce */
 
 const path = require('path');
-const { normalize } = path;
+const { normalize, extname, basename } = path;
 
 const isRev = path.sep === '\\';
 
@@ -34,7 +34,9 @@ const DEF = isRev ? {
 const oriAny = n => n;
 
 let alwaysJS = true;
-const addExt = (n = '') => n[n.length - 1].indexOf(path.sep) && !path.extname(n) ? n + '.js' : n;
+const addExt = isRev
+	? (n = '') => n[n.length - 1].indexOf('\\') && !extname(n) ? n + '.js' : n
+	: (n = '') => n[n.length - 1].indexOf('/') && !extname(n) ? n + '.js' : n;
 const oriStr = (n = '') => n;
 let assocJS = alwaysJS ? addExt : oriStr;
 
@@ -86,7 +88,7 @@ ProceHdl.prototype = {
 function MpathHdl(proceHdl, mpath = DEF.MPATH, mdir = null) {
 	this.liser = proceHdl.liser, this.proce = proceHdl.proce;
 	mdir ? [this.mpath, this.mname, this.mdir] = [mdir + mpath, mpath, mdir] : (
-		this.mname = path.basename((this.mpath = mpath) + ' ').slice(0, -1),
+		this.mname = basename((this.mpath = mpath) + ' ').slice(0, -1),
 		this.mdir = mpath.slice(0, - this.mname.length)
 	);
 }
