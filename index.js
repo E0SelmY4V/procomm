@@ -1,6 +1,6 @@
 /**
  * 幻想私社进程间通信框架
- * @version 1.1223.0
+ * @version 1.1223.2
  * @author E0SelmY4V
  * @link https://github.com/E0SelmY4V/procomm
  */

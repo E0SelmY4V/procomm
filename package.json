@@ -1,6 +1,6 @@
 {
 	"name": "procomm",
-	"version": "0.1223.0",
+	"version": "0.1223.2",
 	"description": "Simple file-to-file IPC framework",
 	"main": "index.js",
 	"scripts": {},
