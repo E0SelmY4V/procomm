@@ -1,33 +1,39 @@
 export = getHandle;
-declare const getHandle: (mpath?: string, subProce?: SubProce | null, mdir?: string) => MpathHdl;
-type SubProce = (typeof import('child_process'))['ChildProcess'];
-declare function MpathHdl(proceHdl: ProceHdl, mpath?: string | undefined, mdir?: string | null | undefined): MpathHdl;
+declare function getHandle(mpath?: string, subProce?: Proce | null, mdir?: string): MpathHdl;
+declare namespace getHandle {
+    export { getHandle, NowProce, SubProce, Proce, SendHandle };
+}
+type Proce = NowProce | SubProce;
+declare function MpathHdl(proceHdl: ProceHdl, mpath?: string, mdir?: string): void;
 declare class MpathHdl {
-    constructor(proceHdl: ProceHdl, mpath?: string | undefined, mdir?: string | null | undefined);
+    constructor(proceHdl: ProceHdl, mpath?: string, mdir?: string);
     liser: ProceHdl['liser'];
     proce: Proce;
     mname: string;
     mpath: string;
     mdir: string;
-    tell(target?: string | undefined, message?: any, proce?: Proce | undefined, handle?: unknown): MpathHdl;
-    listen(from?: string | undefined, listener?: NodeJS.MessageListener | undefined): MpathHdl;
-    reset(proce?: Proce, mpath?: string): MpathHdl;
-    reProce(proce?: Proce): MpathHdl;
+    tell<N>(target?: string, message?: N | null, proce?: Proce | null, handle?: SendHandle | null): MpathHdl;
+    listen(from?: string, listener?: NodeJS.MessageListener): MpathHdl;
+    reset(proce?: Proce | null, mpath?: string): MpathHdl;
+    reProce(proce?: Proce | null): MpathHdl;
     reMpath(mpath?: string): MpathHdl;
     set alwaysJS(arg: boolean);
     get alwaysJS(): boolean;
     procing: {
         [pid: number]: ProceHdl;
     };
-    getHandle: (mpath?: string, subProce?: SubProce | null, mdir?: string) => MpathHdl;
+    getHandle: typeof getHandle;
     MsgPack: typeof MsgPack;
     ProceHdl: typeof ProceHdl;
     MpathHdl: typeof MpathHdl;
-    toKey: (a?: string, b?: string) => string;
+    toKey: (a: string, b: string) => string;
 }
-declare function ProceHdl(subProce?: SubProce | null): void;
+type NowProce = NodeJS.Process;
+type SubProce = import('child_process').ChildProcess;
+type SendHandle = import('child_process').SendHandle;
+declare function ProceHdl(subProce?: Proce | null): void;
 declare class ProceHdl {
-    constructor(subProce?: SubProce | null);
+    constructor(subProce?: Proce | null);
     mpath: {
         [name: string]: MpathHdl;
     };
@@ -37,11 +43,8 @@ declare class ProceHdl {
     };
     setMpath(mpath?: string, mdir?: string): MpathHdl;
 }
-type Proce = NowProce | SubProce;
-declare function MsgPack(mpfrom?: string, mpsend?: string | undefined, msg?: unknown): MsgPack;
-declare class MsgPack {
-    constructor(mpfrom?: string, mpsend?: string | undefined, msg?: unknown);
+declare class MsgPack<N> {
+    constructor(mpfrom: string, mpsend: string, msg: N);
     key: string;
-    msg: unknown;
+    msg: N;
 }
-type NowProce = NodeJS.Process;

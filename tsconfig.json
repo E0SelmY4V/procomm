@@ -16,8 +16,8 @@
 		"allowJs": true,
 		"declaration": true,
 		"emitDeclarationOnly": true,
-		"incremental": true,
 		"removeComments": true,
+		"checkJs": true,
 	},
 	"exclude": [
 		"node_modules",
