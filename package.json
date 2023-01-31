@@ -3,6 +3,12 @@
 	"version": "0.1223.2",
 	"description": "Simple file-to-file IPC framework",
 	"main": "lib/index.js",
+	"exports": {
+		".": {
+			"require": "./lib/index.js",
+			"import": "./lib/esm.js"
+		}
+	},
 	"scripts": {},
 	"repository": {
 		"type": "git",
@@ -21,6 +27,7 @@
 	},
 	"homepage": "https://github.com/E0SelmY4V/procomm#readme",
 	"dependencies": {
+		"esm-entry": "^1.0.0",
 		"@types/node": ""
 	}
 }

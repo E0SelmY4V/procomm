@@ -5,13 +5,17 @@ Through elegant method chain, you can let the JS file running in different proce
 
 ## Initialization
 
-To initialize *procomm*, you need:
+### CJS
 
-```javascript
+```js
 const procomm = require('procomm')(__filename);
-// or
+```
+
+### ESM
+
+```js
 import procommIniter from 'procomm';
-const procomm = procommIniter(__filename);
+const procomm = procommIniter(import.meta.url);
 ```
 
 ## Usage
