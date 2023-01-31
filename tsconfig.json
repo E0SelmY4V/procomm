@@ -16,7 +16,6 @@
 		"allowJs": true,
 		"declaration": true,
 		"emitDeclarationOnly": true,
-		"removeComments": true,
 		"checkJs": true,
 	},
 	"exclude": [
